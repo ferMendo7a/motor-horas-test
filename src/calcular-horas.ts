@@ -243,6 +243,22 @@ export function calcularJornada(
     `Jornal ${Math.round(jornal)} G$ · divisor ${divisorJornada} · valor minuto ${valorMinuto.toFixed(2)} G$.`,
   )
 
+  const aplicaNuevaResolucion =
+    cfg.adheridoNuevaResolucion === true &&
+    cfg.vigenciaNuevaResolucion !== undefined &&
+    cfg.recargoNocturnoNuevaResolucion !== undefined &&
+    jornada.fecha >= cfg.vigenciaNuevaResolucion
+
+  const recargoNocturnoOrdinarias = aplicaNuevaResolucion
+    ? cfg.recargoNocturnoNuevaResolucion!
+    : cfg.recargoNocturno
+
+  if (aplicaNuevaResolucion) {
+    detalle.push(
+      `Aplica Resolución 118/2026: recargo nocturno de ordinarias ${(recargoNocturnoOrdinarias * 100).toFixed(0)}% (vigente desde ${cfg.vigenciaNuevaResolucion}).`,
+    )
+  }
+
   // ------------------------------------------------------------------
   // 7) Reparto. Los bloques se van comiendo la jornada ordinaria en orden;
   //    lo que sobra es extra, hasta el tope diario.
@@ -280,7 +296,7 @@ export function calcularJornada(
       restante -= ordinarias
       if (b.nocturno) {
         min.ordinariasNocturnas += ordinarias
-        val.ordinariasNocturnas += ordinarias * valorMinuto * (1 + cfg.recargoNocturno)
+        val.ordinariasNocturnas += ordinarias * valorMinuto * (1 + recargoNocturnoOrdinarias)
       } else {
         min.ordinariasDiurnas += ordinarias
         val.ordinariasDiurnas += ordinarias * valorMinuto

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { calcularJornada } from '../src/calcular-horas.js'
-import { ConfigEmpresa, FRIGORIFICO, SEGURIDAD_SUR } from '../src/config-empresa.js'
+import { ConfigEmpresa, FRIGORIFICO, MUEBLERIA_VINTAGE, SEGURIDAD_SUR } from '../src/config-empresa.js'
 import { Jornada, MotorError } from '../src/tipos.js'
 
 /**
@@ -277,6 +277,125 @@ describe('configuración por empresa', () => {
     expect(r.minutos.intervalo).toBe(0)
     expect(r.minutos.ordinariasDiurnas).toBe(540)
     expect(r.total).toBe(112_500)
+  })
+})
+
+describe('Resolución 118/2026 (nueva empresa adherida)', () => {
+  const FECHA_PREVIA_VIGENCIA = '2026-09-30'
+  const FECHA_VIGENCIA_EXACTA = '2026-10-01'
+  const FECHA_POSTERIOR_VIGENCIA = '2026-10-02'
+
+  it('empresa adherida, fecha previa a la vigencia: sigue usando el recargo anterior (30%)', () => {
+    const r = calcularJornada(
+      jornada({ turno: TURNO_VIGILANCIA, entrada: '20:00', salida: '23:00', fecha: FECHA_PREVIA_VIGENCIA }),
+      MUEBLERIA_VINTAGE,
+    )
+
+    expect(r.minutos.ordinariasNocturnas).toBe(180)
+    expect(r.valores.ordinariasNocturnas).toBe(55_714)
+    expect(r.detalle.some((linea) => linea.includes('Resolución 118/2026'))).toBe(false)
+  })
+
+  it('empresa adherida, fecha posterior a la vigencia: aplica el nuevo recargo (40%)', () => {
+    const r = calcularJornada(
+      jornada({ turno: TURNO_VIGILANCIA, entrada: '20:00', salida: '23:00', fecha: FECHA_POSTERIOR_VIGENCIA }),
+      MUEBLERIA_VINTAGE,
+    )
+
+    expect(r.minutos.ordinariasNocturnas).toBe(180)
+    expect(r.valores.ordinariasNocturnas).toBe(60_000)
+    expect(r.detalle.some((linea) => linea.includes('Resolución 118/2026'))).toBe(true)
+  })
+
+  it('empresa adherida, fecha exacta a inicio de vigencia: ya aplica el nuevo recargo (40%)', () => {
+    const r = calcularJornada(
+      jornada({ turno: TURNO_VIGILANCIA, entrada: '20:00', salida: '23:00', fecha: FECHA_VIGENCIA_EXACTA }),
+      MUEBLERIA_VINTAGE,
+    )
+
+    expect(r.minutos.ordinariasNocturnas).toBe(180)
+    expect(r.valores.ordinariasNocturnas).toBe(60_000)
+    expect(r.detalle.some((linea) => linea.includes('Resolución 118/2026'))).toBe(true)
+  })
+
+  it('empresa no adherida, fecha previa a la vigencia: sigue con el recargo anterior (30%)', () => {
+    const r = calcularJornada(
+      jornada({ turno: TURNO_VIGILANCIA, entrada: '20:00', salida: '23:00', fecha: FECHA_PREVIA_VIGENCIA }),
+      SEGURIDAD_SUR,
+    )
+
+    expect(r.valores.ordinariasNocturnas).toBe(55_714)
+    expect(r.detalle.some((linea) => linea.includes('Resolución 118/2026'))).toBe(false)
+  })
+
+  it('empresa no adherida, fecha posterior a la vigencia: no aplica el nuevo recargo', () => {
+    const r = calcularJornada(
+      jornada({ turno: TURNO_VIGILANCIA, entrada: '20:00', salida: '23:00', fecha: FECHA_POSTERIOR_VIGENCIA }),
+      SEGURIDAD_SUR,
+    )
+
+    expect(r.valores.ordinariasNocturnas).toBe(55_714)
+    expect(r.detalle.some((linea) => linea.includes('Resolución 118/2026'))).toBe(false)
+  })
+
+  it('empresa no adherida, fecha exacta a inicio de vigencia: tampoco aplica el nuevo recargo', () => {
+    const r = calcularJornada(
+      jornada({ turno: TURNO_VIGILANCIA, entrada: '20:00', salida: '23:00', fecha: FECHA_VIGENCIA_EXACTA }),
+      SEGURIDAD_SUR,
+    )
+
+    expect(r.valores.ordinariasNocturnas).toBe(55_714)
+    expect(r.detalle.some((linea) => linea.includes('Resolución 118/2026'))).toBe(false)
+  })
+
+  it('turno diurno y empresa adherida vigente: el total no cambia', () => {
+    const r = calcularJornada(
+      jornada({ entrada: '08:00', salida: '17:00', fecha: FECHA_POSTERIOR_VIGENCIA }),
+      MUEBLERIA_VINTAGE,
+    )
+
+    expect(r.minutos.ordinariasNocturnas).toBe(0)
+    expect(r.total).toBe(100_000)
+  })
+
+  it('turno mixto nocturno→diurno y empresa adherida vigente: aplica el recargo nuevo solo al bloque nocturno', () => {
+    const r = calcularJornada(
+      {
+        fecha: FECHA_POSTERIOR_VIGENCIA,
+        colaborador: COLABORADOR_DEFAULT,
+        turno: {
+          nombre: 'Mixto 22-08',
+          inicio: '22:00',
+          fin: '08:00',
+        },
+        marcacion: {
+          entrada: `${FECHA_POSTERIOR_VIGENCIA}T22:00`,
+          salida: '2026-10-03T08:00',
+        },
+      },
+      MUEBLERIA_VINTAGE,
+    )
+
+    expect(r.minutos.ordinariasNocturnas).toBe(480)
+    expect(r.valores.ordinariasNocturnas).toBe(160_000)
+    expect(r.detalle.some((linea) => linea.includes('Resolución 118/2026'))).toBe(true)
+  })
+
+  it('día feriado y empresa adherida vigente: no afecta las horas feriado nocturno', () => {
+    const r = calcularJornada(
+      jornada({
+        turno: TURNO_VIGILANCIA,
+        entrada: '20:00',
+        salida: '23:00',
+        fecha: '2026-12-25',
+      }),
+      MUEBLERIA_VINTAGE,
+    )
+
+    expect(r.esFeriado).toBe(true)
+    expect(r.minutos.ordinariasNocturnas).toBe(0)
+    expect(r.minutos.feriadoNocturno).toBe(180)
+    expect(r.valores.feriadoNocturno).toBe(98_571)
   })
 })
 

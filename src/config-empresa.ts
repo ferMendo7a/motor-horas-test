@@ -51,6 +51,13 @@ export interface ConfigEmpresa {
 
   /** Redondear cada categoría al guaraní. */
   redondearValores: boolean
+
+  /** Adhesión voluntaria a la Resolución 118/2026 (ver REGLA-NUEVA.md). */
+  adheridoNuevaResolucion?: boolean
+  /** Fecha desde la que rige la Resolución 118/2026 para esta empresa, `YYYY-MM-DD`. */
+  vigenciaNuevaResolucion?: string
+  /** Recargo nocturno de la Resolución 118/2026 (0.40 = +40%), reemplaza a `recargoNocturno` a partir de la vigencia. */
+  recargoNocturnoNuevaResolucion?: number
 }
 
 /**
@@ -93,7 +100,16 @@ export const SEGURIDAD_SUR: ConfigEmpresa = {
   dividirTurnoPorMedianoche: false,
 }
 
+export const MUEBLERIA_VINTAGE: ConfigEmpresa = {
+  ...FRIGORIFICO,
+  nombre: 'Muebleria Vintage',
+  adheridoNuevaResolucion: true,
+  vigenciaNuevaResolucion: '2026-10-01',
+  recargoNocturnoNuevaResolucion: 0.4,
+}
+
 export const EMPRESAS: Record<string, ConfigEmpresa> = {
   frigorifico: FRIGORIFICO,
   seguridad: SEGURIDAD_SUR,
+  muebleria: MUEBLERIA_VINTAGE,
 }
