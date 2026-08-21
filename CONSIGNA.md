@@ -28,6 +28,8 @@ Encontralas, explicá **por qué** pasan, y escribí para cada una un test que l
 
 > El test que falla antes del arreglo vale más que el arreglo.
 
+Respuesta en documento [`tarea1.md`](doc/tarea1.md)
+
 ### 2 · Implementá la Resolución 118/2026
 
 En [`REGLA-NUEVA.md`](REGLA-NUEVA.md) hay una resolución que cambia cómo se pagan ciertas horas. Implementala **sin romper el comportamiento anterior**:
@@ -36,6 +38,8 @@ En [`REGLA-NUEVA.md`](REGLA-NUEVA.md) hay una resolución que cambia cómo se pa
 - las jornadas **anteriores** a la fecha de vigencia siguen dando exactamente el mismo resultado que daban.
 
 Cómo modelás la adhesión y la vigencia es decisión tuya.
+
+Implementación realizada con cambios en archivos [`config-empresa.ts`](src/config-empresa.ts) y [`calcular-horas.ts`](src/calcular-horas.ts)
 
 ### 3 · Contanos qué pasó
 

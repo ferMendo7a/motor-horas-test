@@ -56,6 +56,8 @@ No le delego la aprobación automática para ejecutar comandos, normalmente le c
 Nunca le dejo revisar datos sensibles, como contraseñas, apikeys, permitir instalar librerías o plugins automáticamente.
 Creo que allí prima el sentido común, denegar datos sensibles, no permitir acciones automáticas a no ser que uno esté consciente de lo que le permite, limitar siempre, permitir lo conocido.
 
+Historial del chat en [`chat.json`](doc/chat.json)
+
 -
 
 ---
